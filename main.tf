@@ -60,6 +60,44 @@ resource "aws_iam_policy_attachment" "master-attach" {
   policy_arn = "${aws_iam_policy.master_policy.arn}"
 }
 
+data "template_file" "master_elb_policy_json" {
+  template = "${file("${path.module}/template/master-elb-policy.json.tpl")}"
+
+  vars {}
+}
+
+resource "aws_iam_policy" "master_elb_policy" {
+  name        = "${var.cluster_name}-master"
+  path        = "/"
+  description = "Policy for role ${var.cluster_name}-elb-master"
+  policy      = "${data.template_file.master_elb_policy_json.rendered}"
+}
+
+resource "aws_iam_role" "master_elb_role" {
+  name = "${var.cluster_name}-elb-master"
+
+  assume_role_policy = <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Action": "sts:AssumeRole",
+      "Principal": {
+        "Service": "elasticloadbalancing.amazonaws.com"
+      },
+      "Effect": "Allow",
+      "Sid": ""
+    }
+  ]
+}
+EOF
+}
+
+resource "aws_iam_policy_attachment" "master-elb-attach" {
+  name       = "master-elb-attachment"
+  roles      = ["${aws_iam_role.master_elb_role.name}"]
+  policy_arn = "${aws_iam_policy.master_elb_policy.arn}"
+}
 resource "aws_iam_instance_profile" "master_profile" {
   name  = "${var.cluster_name}-master"
   role = "${aws_iam_role.master_role.name}"

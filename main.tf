@@ -147,13 +147,13 @@ resource "aws_security_group_rule" "allow_ssh_from_cidr" {
     cidr_blocks = ["${var.ssh_access_cidr[count.index]}"]
     security_group_id = "${aws_security_group.kubernetes.id}"
 }
-resource "aws_security_group_rule" "custom_access" {
-    count = "${length(var.custom_access_cidr)}"
+resource "aws_security_group_rule" "allow_http_from_cidr" {
+    count = "${length(var.ssh_access_cidr)}"
     type = "ingress"
     from_port = 0
-    to_port = ["${var.custom_open_ports}"]
+    to_port = 80
     protocol = "tcp"
-    cidr_blocks = ["${var.custom_access_cidr[count.index]}"]
+    cidr_blocks = ["${var.ssh_access_cidr[count.index]}"]
     security_group_id = "${aws_security_group.kubernetes.id}"
 }
 # Allow the security group members to talk with each other without restrictions
